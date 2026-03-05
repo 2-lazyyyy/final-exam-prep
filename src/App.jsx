@@ -18,7 +18,7 @@ export default function StudyHub() {
     return dateA - dateB;
   });
 
-  const [activeSubject, setActiveSubject] = useState(subjects[0]);
+  const [activeSubject, setActiveSubject] = useState("SQM");
   const subjectData = studyData[activeSubject];
   const isDocument = subjectData?.type === "document";
   
@@ -26,15 +26,30 @@ export default function StudyHub() {
   const [activeTab, setActiveTab] = useState(tabs[0] || "");
   const [openQuestionIndex, setOpenQuestionIndex] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Track if the sound is currently playing
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const [now, setNow] = useState(new Date());
   const popAudio = useRef(typeof Audio !== "undefined" ? new Audio('/pop.mp3') : null);
 
+  // Clock Timer
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  // Listen for when the audio finishes playing naturally to reset the state
+  useEffect(() => {
+    const audioEl = popAudio.current;
+    if (audioEl) {
+      const handleEnded = () => setIsPlaying(false);
+      audioEl.addEventListener('ended', handleEnded);
+      return () => audioEl.removeEventListener('ended', handleEnded);
+    }
+  }, []);
+
+  // Reset tabs when changing subjects
   useEffect(() => {
     if (!isDocument) {
       const newTabs = Object.keys(studyData[activeSubject] || {});
@@ -48,10 +63,19 @@ export default function StudyHub() {
     setOpenQuestionIndex(openQuestionIndex === index ? null : index);
   };
 
-  const playSound = () => {
+  // The new Play/Stop Toggle Logic
+  const toggleSound = () => {
     if (popAudio.current) {
-      popAudio.current.currentTime = 0;
-      popAudio.current.play().catch(e => console.log("Audio play failed", e));
+      if (isPlaying) {
+        // If it's playing, stop it and rewind
+        popAudio.current.pause();
+        popAudio.current.currentTime = 0;
+        setIsPlaying(false);
+      } else {
+        // If it's stopped, play it
+        popAudio.current.play().catch(e => console.log("Audio play failed", e));
+        setIsPlaying(true);
+      }
     }
   };
 
@@ -74,13 +98,12 @@ export default function StudyHub() {
   return (
     <div className="h-screen bg-slate-50 text-slate-900 font-sans flex flex-col overflow-hidden">
       
-      {/* CSS to physically destroy the scrollbar across all browsers */}
       <style>{`
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      {/* Premium Gradient Header using your Teal theme */}
+      {/* Premium Gradient Header */}
       <header className="bg-gradient-to-r from-[#045c66] via-[#077d8a] to-[#0996a6] text-white shadow-lg z-40 shrink-0 border-b border-[#045c66]/30">
         <div className="px-4 md:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center justify-between shrink-0">
@@ -122,7 +145,6 @@ export default function StudyHub() {
 
       <div className="flex flex-1 overflow-hidden relative">
         
-        {/* Blurred Mobile Overlay */}
         {isMobileMenuOpen && (
           <div 
             className="absolute inset-0 bg-slate-900/30 z-20 md:hidden backdrop-blur-md transition-opacity"
@@ -130,7 +152,6 @@ export default function StudyHub() {
           />
         )}
 
-        {/* Floating Sidebar */}
         <aside className={`absolute md:relative w-[85%] md:w-72 h-full bg-white/90 backdrop-blur-xl border-r border-slate-200/60 flex flex-col shadow-2xl md:shadow-none z-30 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shrink-0 ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}>
@@ -157,7 +178,7 @@ export default function StudyHub() {
                       setOpenQuestionIndex(null);
                       setIsMobileMenuOpen(false); 
                     }}
-                    className={`text-left px-4 py-3.5 rounded-xl font-semibold transition-all duration-200 ${
+                    className={`text-justify px-4 py-3.5 rounded-xl font-semibold transition-all duration-200 ${
                       activeTab === tab 
                         ? 'bg-[#077d8a]/10 text-[#077d8a] shadow-sm ring-1 ring-[#077d8a]/30 translate-x-1' 
                         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:translate-x-1'
@@ -171,7 +192,6 @@ export default function StudyHub() {
           </div>
         </aside>
 
-        {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto w-full bg-slate-50/50 relative hide-scroll">
           
           <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#077d8a 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
@@ -184,16 +204,19 @@ export default function StudyHub() {
                   {isDocument ? "Visual Study Guide" : (activeTab || "Select a Topic")}
                 </h2>
                 <p className="text-slate-500 mt-3 text-base md:text-lg font-medium">
-                  {isDocument ? subjectData.message : "Click to reveal the notes. Try to answer in your head first!"}
+                  {isDocument ? subjectData.message : "Click to reveal the notes."}
                 </p>
               </div>
               
+              {/* Play/Stop Toggle Countdown Badge */}
               <div 
-                onClick={playSound}
-                className="bg-white/80 backdrop-blur-sm border-2 border-rose-100 text-rose-600 px-7 py-4 rounded-3xl flex flex-col items-center justify-center shadow-lg shadow-rose-100/50 w-full md:w-auto md:min-w-[15rem] cursor-pointer hover:bg-rose-50 hover:border-rose-200 hover:-translate-y-1 active:translate-y-0 active:scale-95 transition-all duration-300 select-none group"
+                onClick={toggleSound}
+                className={`bg-white/80 backdrop-blur-sm border-2 text-rose-600 px-7 py-4 rounded-3xl flex flex-col items-center justify-center shadow-lg w-full md:w-auto md:min-w-[15rem] cursor-pointer hover:-translate-y-1 active:translate-y-0 active:scale-95 transition-all duration-300 select-none group ${
+                  isPlaying ? 'border-rose-400 bg-rose-50 shadow-rose-200/60' : 'border-rose-100 hover:bg-rose-50 hover:border-rose-200 shadow-rose-100/50'
+                }`}
               >
-                <span className="text-xs font-bold uppercase tracking-widest text-rose-400 mb-1 font-sans group-hover:text-rose-500 transition-colors">
-                  Time to Exam
+                <span className="text-xs font-bold uppercase tracking-widest text-rose-400 mb-1 font-sans group-hover:text-rose-500 transition-colors flex items-center gap-2">
+                  'Time to Exam'
                 </span>
                 <span className="text-3xl md:text-4xl font-black leading-none tracking-tighter font-mono drop-shadow-sm">
                   {getCountdown(activeSubject)}
@@ -232,6 +255,10 @@ export default function StudyHub() {
                     key={index}
                     question={qa.question}
                     answer={qa.answer}
+                    type={qa.type}
+                    images={qa.images}
+                    pdfLink={qa.pdfLink}
+                    headers={qa.headers}
                     isOpen={openQuestionIndex === index}
                     onClick={() => handleToggleQuestion(index)}
                   />
