@@ -200,7 +200,7 @@ export default function StudyHub() {
           showCompletionModal ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'
         }`}>
           <h3 className="text-2xl font-black text-slate-800 mb-4 flex items-center justify-center gap-2">
-            <span>🎉</span> Topic Conquered!
+            Sayar Gyi ha
           </h3>
           
           <div className="w-full h-64 rounded-xl overflow-hidden mb-6 relative pointer-events-none">
@@ -212,14 +212,12 @@ export default function StudyHub() {
             ></iframe>
           </div>
 
-          <p className="text-slate-500 mb-6 leading-relaxed font-medium">
-            You just put in the work and memorized every single question in this section. You are totally ready for this!
-          </p>
+          
           <button 
             onClick={() => setShowCompletionModal(false)}
             className="w-full py-4 bg-gradient-to-r from-[#045c66] to-[#077d8a] text-white rounded-xl font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all"
           >
-            Keep Going 🚀
+            Ok pr!
           </button>
         </div>
       </div>
