@@ -108,7 +108,7 @@ export default function AccordionItem({
           }`}
         >
           <div className="overflow-hidden">
-            <div className="p-5 md:p-6 pt-0 bg-white dark:bg-[#171717] overflow-x-auto">
+            <div className="p-6 md:p-12 pt-0 bg-white dark:bg-[#171717] overflow-x-auto">
               <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent mb-5"></div>
 
               {images && images.length > 0 && (
@@ -173,7 +173,7 @@ export default function AccordionItem({
                   {answer.map((paragraph, index) => (
                     <p
                       key={index}
-                      className="mb-2 text-slate-700 dark:text-slate-200 text-base md:text-[17px] font-medium leading-6 text-justify last:mb-0"
+                      className="mb-4 text-slate-700 dark:text-slate-200 text-base md:text-[17px] font-medium leading-6 text-justify last:mb-0"
                     >
                       {paragraph}
                     </p>
