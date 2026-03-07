@@ -1,4 +1,5 @@
 const DEFAULT_MODEL = "gemini-3-flash-preview";
+let preferredKeyIndex = 0;
 
 const tryParseJson = (value) => {
   if (typeof value !== "string") return null;
@@ -46,19 +47,63 @@ const shouldRetryWithNextKey = (statusCode, errorPayload, rawText) => {
   );
 };
 
+const isTooManyRequests = (statusCode, errorPayload, rawText) => {
+  const status = String(errorPayload?.status || "").toUpperCase();
+  const message = String(errorPayload?.message || rawText || "");
+
+  if (Number(statusCode) === 429) return true;
+  if (status === "RESOURCE_EXHAUSTED") return true;
+
+  return /too many requests|rate.?limit|resource has been exhausted/i.test(message);
+};
+
 const parseBody = (req) => {
-  if (!req?.body) return {};
+  let rawBody;
 
-  if (typeof req.body === "string") {
-    const parsed = tryParseJson(req.body);
-    return parsed && typeof parsed === "object" ? parsed : {};
+  try {
+    rawBody = req?.body;
+  } catch {
+    return {
+      body: {},
+      error: {
+        code: 400,
+        status: "INVALID_ARGUMENT",
+        message: "Invalid JSON body"
+      }
+    };
   }
 
-  if (typeof req.body === "object") {
-    return req.body;
+  if (!rawBody) return { body: {}, error: null };
+
+  if (typeof rawBody === "string") {
+    const parsed = tryParseJson(rawBody);
+
+    if (parsed && typeof parsed === "object") {
+      return { body: parsed, error: null };
+    }
+
+    return {
+      body: {},
+      error: {
+        code: 400,
+        status: "INVALID_ARGUMENT",
+        message: "Invalid JSON body"
+      }
+    };
   }
 
-  return {};
+  if (typeof rawBody === "object") {
+    return { body: rawBody, error: null };
+  }
+
+  return {
+    body: {},
+    error: {
+      code: 400,
+      status: "INVALID_ARGUMENT",
+      message: "Invalid request body"
+    }
+  };
 };
 
 export default async function handler(req, res) {
@@ -72,7 +117,12 @@ export default async function handler(req, res) {
     });
   }
 
-  const body = parseBody(req);
+  const { body, error: bodyError } = parseBody(req);
+
+  if (bodyError) {
+    return res.status(400).json({ error: bodyError });
+  }
+
   const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
   const model = typeof body.model === "string" && body.model.trim() ? body.model.trim() : DEFAULT_MODEL;
 
@@ -108,9 +158,12 @@ export default async function handler(req, res) {
 
   let lastFailure = null;
 
-  for (let index = 0; index < keys.length; index += 1) {
-    const apiKey = keys[index];
-    const hasAnotherKey = index < keys.length - 1;
+  const startIndex = preferredKeyIndex % keys.length;
+
+  for (let attempt = 0; attempt < keys.length; attempt += 1) {
+    const keyIndex = (startIndex + attempt) % keys.length;
+    const apiKey = keys[keyIndex];
+    const hasAnotherKey = attempt < keys.length - 1;
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${apiKey}`;
 
     try {
@@ -141,6 +194,10 @@ export default async function handler(req, res) {
         payload: errorPayload,
         rawText
       };
+
+      if (hasAnotherKey && isTooManyRequests(upstreamResponse.status, errorPayload, rawText)) {
+        preferredKeyIndex = (keyIndex + 1) % keys.length;
+      }
 
       if (hasAnotherKey && shouldRetryWithNextKey(upstreamResponse.status, errorPayload, rawText)) {
         continue;

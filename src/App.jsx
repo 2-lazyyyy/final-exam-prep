@@ -95,8 +95,18 @@ const toReadableAiError = (error) => {
     return "Too many requests right now. Please wait a moment and retry.";
   }
 
-  if (status === "PERMISSION_DENIED" || code === 403) {
-    return "Gemini API key is invalid or does not have permission.";
+  if (/reported as leaked|key was reported as leaked|compromised api key/i.test(apiMessage || rawMessage)) {
+    return "Gemini API key was reported as leaked. Generate new keys and update .env (GEMINI_API_KEY and GEMINI_API_KEY_BACKUP), then restart your dev server.";
+  }
+
+  if (
+    status === "PERMISSION_DENIED" ||
+    status === "UNAUTHENTICATED" ||
+    code === 401 ||
+    code === 403 ||
+    /api key not valid|invalid api key|permission denied|forbidden|unauthenticated/i.test(apiMessage || rawMessage)
+  ) {
+    return "Gemini keys are invalid or restricted. Check Vercel env vars GEMINI_API_KEY and GEMINI_API_KEY_BACKUP, and ensure both keys allow Generative Language API.";
   }
 
   if (status === "NOT_FOUND" || code === 404) {
@@ -1433,7 +1443,7 @@ Subjects Studied: ${Object.keys(memorizedQs).join(', ') || 'None'}
                 <>
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-2">Your Message (Optional)</label>
                   <textarea
-                    rows={3}
+                    rows={1}
                     value={aiPrompt}
                     onChange={(event) => setAiPrompt(event.target.value)}
                     placeholder="e.g. exam style answer format နဲ့ရှင်းပြပါ"
@@ -1444,7 +1454,7 @@ Subjects Studied: ${Object.keys(memorizedQs).join(', ') || 'None'}
                     type="button"
                     onClick={sendOptionalMessageToAi}
                     disabled={!canSendOptionalMessage}
-                    className={`mt-3 w-full py-2.5 rounded-xl font-bold text-sm transition-all ${
+                    className={`mt-2 w-full py-2.5 rounded-xl font-bold text-sm transition-all ${
                       canSendOptionalMessage
                         ? 'bg-[#077d8a] text-white hover:bg-[#066d79] active:scale-[0.99]'
                         : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-300 cursor-not-allowed'
