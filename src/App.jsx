@@ -83,8 +83,18 @@ const toReadableAiError = (error) => {
     return "Too many requests right now. Please wait a moment and retry.";
   }
 
-  if (status === "PERMISSION_DENIED" || code === 403) {
-    return "Gemini API key is invalid or does not have permission.";
+  if (/reported as leaked|key was reported as leaked|compromised api key/i.test(apiMessage || rawMessage)) {
+    return "Gemini API key was reported as leaked. Generate new keys and update .env (GEMINI_API_KEY and GEMINI_API_KEY_BACKUP), then restart your dev server.";
+  }
+
+  if (
+    status === "PERMISSION_DENIED" ||
+    status === "UNAUTHENTICATED" ||
+    code === 401 ||
+    code === 403 ||
+    /api key not valid|invalid api key|permission denied|forbidden|unauthenticated/i.test(apiMessage || rawMessage)
+  ) {
+    return "Gemini keys are invalid or restricted. Check Vercel env vars GEMINI_API_KEY and GEMINI_API_KEY_BACKUP, and ensure both keys allow Generative Language API.";
   }
 
   if (status === "NOT_FOUND" || code === 404) {
@@ -811,7 +821,7 @@ export default function StudyHub() {
 
         <aside className="hidden lg:flex w-[24rem] xl:w-[27rem] h-full bg-white/95 backdrop-blur-xl border-l border-slate-200/70 shrink-0">
           <div className="w-full h-full p-4 xl:p-5 flex flex-col">
-            <div className="mb-4 pb-4 border-b border-slate-200/80">
+            <div className="mb-2 pb-2 border-b border-slate-200/80">
               <h3 className="text-sm font-black uppercase tracking-widest text-[#077d8a]/70">AI Chat</h3>
               <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                 Tap ✨ Send to AI on any question card to get Burmese explanation.
@@ -824,20 +834,20 @@ export default function StudyHub() {
               </div>
             ) : (
               <>
-                <label className="text-xs font-bold text-slate-500 mt-4 mb-2">Your Message (Optional)</label>
+                <label className="text-xs font-bold text-slate-500 mt-1 mb-1">Your Message (Optional)</label>
                 <textarea
-                  rows={3}
+                  rows={1}
                   value={aiPrompt}
                   onChange={(event) => setAiPrompt(event.target.value)}
                   placeholder="e.g. exam style answer format နဲ့ရှင်းပြပါ"
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-[#077d8a]/30 focus:border-[#077d8a]"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50/70 px-3 py-2 text-sm text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-[#077d8a]/30 focus:border-[#077d8a]"
                 />
 
                 <button
                   type="button"
                   onClick={sendOptionalMessageToAi}
                   disabled={!canSendOptionalMessage}
-                  className={`mt-3 w-full py-2.5 rounded-xl font-bold text-sm transition-all ${
+                  className={`mt-2 w-full py-2.5 rounded-xl font-bold text-sm transition-all ${
                     canSendOptionalMessage
                       ? 'bg-[#077d8a] text-white hover:bg-[#066d79] active:scale-[0.99]'
                       : 'bg-slate-200 text-slate-400 cursor-not-allowed'
@@ -846,11 +856,11 @@ export default function StudyHub() {
                   {isAiLoading ? 'Sending...' : 'Send Optional Msg to AI'}
                 </button>
 
-                <p className="mt-2 text-[11px] text-slate-400 leading-relaxed">
+                <p className="mt-1 text-[11px] text-slate-400 leading-relaxed">
                   Card ✨ Send to AI and Optional Msg send are separate actions.
                 </p>
 
-                <div className="mt-4 flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3 overflow-y-auto hide-scroll">
+                <div className="mt-2 flex-1 max-h-screen rounded-2xl border border-slate-200 bg-slate-50 p-3 overflow-y-auto hide-scroll">
                   {!aiResponse && !aiError && !isAiLoading && (
                     <p className="text-xs text-slate-500 leading-relaxed">
                       AI response will appear here. This panel keeps only the latest response.
@@ -911,7 +921,7 @@ export default function StudyHub() {
 
         <div className="relative h-full w-full p-3 flex items-end">
           <div
-            className="w-full max-h-[88vh] rounded-2xl bg-white border border-slate-200 shadow-2xl flex flex-col overflow-hidden"
+            className="w-full max-h-[94vh] rounded-2xl bg-white border border-slate-200 shadow-2xl flex flex-col overflow-hidden"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="px-4 py-3 border-b border-slate-200/80 flex items-center justify-between">
@@ -934,27 +944,27 @@ export default function StudyHub() {
               </button>
             </div>
 
-            <div className="p-4 overflow-y-auto hide-scroll">
+            <div className="p-3 overflow-y-auto hide-scroll">
               {isDocument ? (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 text-slate-500 text-sm p-4 leading-relaxed">
                   AI explanation is available in question tabs only.
                 </div>
               ) : (
                 <>
-                  <label className="text-xs font-bold text-slate-500 mb-2">Your Message (Optional)</label>
+                  <label className="text-xs font-bold text-slate-500 mb-1">Your Message (Optional)</label>
                   <textarea
-                    rows={3}
+                    rows={1}
                     value={aiPrompt}
                     onChange={(event) => setAiPrompt(event.target.value)}
                     placeholder="e.g. exam style answer format နဲ့ရှင်းပြပါ"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-[#077d8a]/30 focus:border-[#077d8a]"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50/70 px-3 py-2 text-sm text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-[#077d8a]/30 focus:border-[#077d8a]"
                   />
 
                   <button
                     type="button"
                     onClick={sendOptionalMessageToAi}
                     disabled={!canSendOptionalMessage}
-                    className={`mt-3 w-full py-2.5 rounded-xl font-bold text-sm transition-all ${
+                    className={`mt-2 w-full py-2.5 rounded-xl font-bold text-sm transition-all ${
                       canSendOptionalMessage
                         ? 'bg-[#077d8a] text-white hover:bg-[#066d79] active:scale-[0.99]'
                         : 'bg-slate-200 text-slate-400 cursor-not-allowed'
@@ -963,11 +973,11 @@ export default function StudyHub() {
                     {isAiLoading ? 'Sending...' : 'Send Optional Msg to AI'}
                   </button>
 
-                  <p className="mt-2 text-[11px] text-slate-400 leading-relaxed">
+                  <p className="mt-1 text-[11px] text-slate-400 leading-relaxed">
                     Card ✨ Send to AI and Optional Msg send are separate actions.
                   </p>
 
-                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 max-h-[52vh] overflow-y-auto hide-scroll">
+                  <div className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 min-h-80 max-h-[68vh] overflow-y-auto hide-scroll">
                     {!aiResponse && !aiError && !isAiLoading && (
                       <p className="text-xs text-slate-500 leading-relaxed">
                         AI response will appear here. This panel keeps only the latest response.
