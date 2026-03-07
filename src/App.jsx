@@ -1298,7 +1298,7 @@ Subjects Studied: ${Object.keys(memorizedQs).join(', ') || 'None'}
                 <>
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-2">Your Message (Optional)</label>
                   <textarea
-                    rows={3}
+                    rows={1}
                     value={aiPrompt}
                     onChange={(event) => setAiPrompt(event.target.value)}
                     placeholder="e.g. exam style answer format နဲ့ရှင်းပြပါ"
