@@ -737,7 +737,7 @@ Subjects Studied: ${Object.keys(memorizedQs).join(', ') || 'None'}
   const currentMockQuestion = mockExamQuestions[mockCurrentIndex] || null;
   const mockTimeLabel = `${String(Math.floor(mockTimeLeftSeconds / 60)).padStart(2, '0')}:${String(mockTimeLeftSeconds % 60).padStart(2, '0')}`;
   const topActionButtonClass =
-    "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm border border-white/15 shadow-sm focus:outline-none focus:ring-2 focus:ring-white/40";
+    "inline-flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm border border-white/15 shadow-sm focus:outline-none focus:ring-2 focus:ring-white/40";
 
   return (
     <div className="h-screen bg-slate-50 dark:bg-[#171717] text-slate-900 dark:text-slate-100 flex flex-col overflow-hidden relative">
@@ -887,8 +887,8 @@ Subjects Studied: ${Object.keys(memorizedQs).join(', ') || 'None'}
           </div>
           
           {/* TOPICS NAV - Align Right with padding fix */}
-          <div className="overflow-x-auto py-2 px-1 snap-x w-full md:justify-end">
-            <nav className="flex gap-3 min-w-max">
+          <div className="overflow-x-auto py-2 px-1 snap-x w-full justify-end">
+            <nav className="flex gap-3 min-w-max justify-end">
               {isDocument ? (
                 <span className="px-5 py-2.5 rounded-full font-bold text-sm bg-white/10 text-white border border-white/20">
                   📄 Document Mode
