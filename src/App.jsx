@@ -248,13 +248,13 @@ export default function StudyHub() {
   const [activeTab, setActiveTab] = useState(tabs[0] || "");
   const [openQuestionIndex, setOpenQuestionIndex] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return window.innerWidth >= 768;
+    if (typeof window === "undefined") return false;
+    return false;
   });
   
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return false;
-    return window.innerWidth >= 1024;
+    return false;
   });
 
   const [isPlaying, setIsPlaying] = useState(false);
